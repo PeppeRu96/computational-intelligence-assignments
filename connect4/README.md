@@ -15,6 +15,8 @@ There are a bunch of different fully parameterizable AIs implemented:
 - *Minimax (alpha-beta pruned) plus Monte Carlo Tree Search*: you can use a special version of minimax integrated with MCTS.  
 The algorithm starts with the standard Minimax and it will use a MCTS to estimate non-terminal node when *max_depth* is reached.
 
+*NB: Using the drawing of Monte Carlo trees from within a notebook can cause some problems, please don't use the drawing functionality from within Google Colab. If you run the script it should be fine.*
+
 ## Example usage
 Every script which starts with *game_test_* provides a usage example of the different algorithms.
 It is easy as writing 3 lines of code to make different AIs fighting against each other.
