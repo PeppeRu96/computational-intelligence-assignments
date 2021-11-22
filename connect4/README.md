@@ -11,7 +11,7 @@ Inside *game_utility.py*, you can find a plug-to-play function **play_connect4**
 There are a bunch of different fully parameterizable AIs implemented:
 - *Minimax depth-limited (without pruning)*: you have to provide an estimation function (among the ones already offered inside the script)
 - *Minimax depth-limited (with Alpha-Beta pruning)*: you have to provide an estimation function plus a second estimation function used to sort the possible moves in order for the alpha-beta pruning to be effective
-- *Monte Carlo Tree Search*: fully configurable, you can provide the number of iterations of the time given to the algorithm to compute the move, along with a rollout function
+- *Monte Carlo Tree Search*: fully configurable, you can provide the number of iterations or the time given to the algorithm to compute the move, along with a rollout function
 - *Minimax (alpha-beta pruned) plus Monte Carlo Tree Search*: you can use a special version of minimax integrated with MCTS.  
 The algorithm starts with the standard Minimax and it will use a MCTS to estimate non-terminal node when *max_depth* is reached.
 
