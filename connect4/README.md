@@ -26,7 +26,7 @@ Please note that notebooks inside VSCode can be used but they are ugly and incon
 ## Statistics
 It is provided a script to compute some statistics in order to compare different configurations for the hyperparameters of the different algorithms and to compare different AI algorithms too.
 It is a bit rusty as it is the first version, but running the example will compare 5 different algorithms with some configurations of the hyperparameters.
-The comparison is round-based, every player fights against each other for *rounds* times. At the end, the results are reported in a table.
-*NB: the process can take a long time if you provide a lot of rounds and a lot of players.*
+The comparison is round-based, every player fights against each other for *rounds* times. At the end, the results are reported in a table.  
+*NB: the process can take a long time if you provide a lot of rounds and a lot of players.*  
 *NB2: for a faster execution of statistics, please, use **generate_statistics** inside a google colab notebook.*
 
