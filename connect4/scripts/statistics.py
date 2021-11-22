@@ -44,8 +44,8 @@ def generate_statistics(players, rounds):
                 winner = play_connect4(
                     player1=pl1,
                     player2=pl2,
-                    show_game_stages=True,
-                    show_taken_time=True
+                    show_game_stages=False,
+                    show_taken_time=False
                 )
 
                 # Reset wrapper object
