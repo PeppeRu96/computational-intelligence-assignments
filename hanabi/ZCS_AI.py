@@ -43,6 +43,7 @@ class ZCS_AI(BaseAI):
         super().__init__(show_moves, save_game_states=save_game_states)
         # LCS rules
         self.rules = None
+        self.best_rules = []
         self.last_chosen_rule = None
         self.last_move = None
         self.hints_given = []                   # Used for immediate reward (list of HintGiven)
@@ -63,7 +64,8 @@ class ZCS_AI(BaseAI):
 
         if load_from_file:
             model = ZCS_AI.load_model(model_path)
-            self.rules = model.rules
+            self.rules = list(model.rules)
+            self.best_rules = list(model.rules)
             self.alpha = model.alpha
             self.decay_amount = model.decay_amount
             self.ga_rate = model.ga_rate
@@ -470,9 +472,18 @@ class ZCS_AI(BaseAI):
         for r in self.rules:
             self.__reset_triggers(r)
 
+    def save_best_rules(self):
+        v1 = list(self.best_rules)
+        v1.extend(list(self.rules))
+        v1 = sorted(v1, key=lambda r:r.utility(), reverse=True)
+        self.best_rules = v1[:self.n_rules]
+
     # Rules evolution exploiting GA/GP
     def boil_ga(self):
         self.log().info("Boiling rules in the GA pot..\n")
+
+        self.save_best_rules()
+
         self.log().info(f"Rule deletion..")
         self.rules = rule_deletion(self.rules, self.log())
         self.log().info(f"Rule specialization..")
