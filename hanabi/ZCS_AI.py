@@ -16,6 +16,7 @@ This class contains the logic, the ZCS_Data.py contains all the wrapper objects 
 class ZCS_Model:
     def __init__(self, zcs):
         self.rules = zcs.rules
+        self.best_rules = zcs.best_rules
         self.alpha = zcs.alpha
         self.decay_amount = zcs.decay_amount
         self.ga_rate = zcs.ga_rate
@@ -65,7 +66,7 @@ class ZCS_AI(BaseAI):
         if load_from_file:
             model = ZCS_AI.load_model(model_path)
             self.rules = list(model.rules)
-            self.best_rules = list(model.rules)
+            self.best_rules = list(model.best_rules)
             self.alpha = model.alpha
             self.decay_amount = model.decay_amount
             self.ga_rate = model.ga_rate
@@ -299,7 +300,12 @@ class ZCS_AI(BaseAI):
             return [trigger]
 
     def trig_rules(self, players, discard_pile, table, my_hand, note_tokens, storm_tokens):
-        for r in self.rules:
+        if self.train:
+            rules = self.rules
+        else:
+            rules = self.best_rules
+
+        for r in rules:
             if type(r) is CompoundRule:
                 triggers = self.__trig_compound_rule(r, players, discard_pile, table, my_hand, note_tokens, storm_tokens)
             elif type(r) is CardRule:
@@ -334,7 +340,12 @@ class ZCS_AI(BaseAI):
                 self.__update_activations(nr)
 
     def update_activations(self):
-        for r in self.rules:
+        if self.train:
+            rules = self.rules
+        else:
+            rules = self.best_rules
+
+        for r in rules:
             self.__update_activations(r)
 
     # Decaying the inactive rules
@@ -355,13 +366,23 @@ class ZCS_AI(BaseAI):
                 self.__decay(nested_r, amount)
 
     def decay(self, amount):
-        for r in self.rules:
+        if self.train:
+            rules = self.rules
+        else:
+            rules = self.best_rules
+
+        for r in rules:
             self.__decay(r, amount)
 
     # Choose action
     def choose_action(self):
+        if self.train:
+            rules = self.rules
+        else:
+            rules = self.best_rules
+
         # 1. Sort the rules based on the fitness
-        sorted_rules = sorted(self.rules, key=lambda r: r.fitness(self.alpha), reverse=True)
+        sorted_rules = sorted(rules, key=lambda r: r.fitness(self.alpha), reverse=True)
 
         # 2. Try to perform the action (why could it be invalid? the rule may not cover the other constraints of the game!)
         for r in sorted_rules:
@@ -457,7 +478,12 @@ class ZCS_AI(BaseAI):
                 self.__reset_rule_counts(nr)
 
     def reset_rule_counts(self):
-        for r in self.rules:
+        if self.train:
+            rules = self.rules
+        else:
+            rules = self.best_rules
+
+        for r in rules:
             self.__reset_rule_counts(r)
 
     def __reset_triggers(self, r):
@@ -469,7 +495,12 @@ class ZCS_AI(BaseAI):
                 self.__reset_triggers(nr)
 
     def reset_triggers(self):
-        for r in self.rules:
+        if self.train:
+            rules = self.rules
+        else:
+            rules = self.best_rules
+
+        for r in rules:
             self.__reset_triggers(r)
 
     def save_best_rules(self):
@@ -483,6 +514,10 @@ class ZCS_AI(BaseAI):
         self.log().info("Boiling rules in the GA pot..\n")
 
         self.save_best_rules()
+
+        # Restart from the optimal point
+        if self.client.game_count % 500 == 0:
+            self.rules = list(self.best_rules)
 
         self.log().info(f"Rule deletion..")
         self.rules = rule_deletion(self.rules, self.log())
@@ -500,7 +535,7 @@ class ZCS_AI(BaseAI):
             if command == "exit":
                 if self.train:
                     self.save_model()
-                    write_rules_on_file(self.rules, self.client.player_name)
+                    write_rules_on_file(self.best_rules, self.client.player_name)
                 os._exit(0)
 
     # Game over
@@ -591,7 +626,8 @@ class ZCS_AI(BaseAI):
 
         if redundant_hint:
             reward = REWARD_DUPLICATED_HINT
-            rule.reward += reward
+            if self.train:
+                rule.reward += reward
             self.log().info(f"Reward {reward} assigned for duplicated hint. BAD!")
 
     def __remove_given_hints(self, data):
@@ -624,7 +660,8 @@ class ZCS_AI(BaseAI):
 
                 # We played correctly a card, give the reward!
                 reward = REWARD_GOOD_PLAY[data.card.value-1]
-                self.last_chosen_rule.reward += reward
+                if self.train:
+                    self.last_chosen_rule.reward += reward
                 self.log().info(f"Reward {reward} given for the good play.")
         else:
             # Check if a fellow player made a good move with our hint to give reward
@@ -634,10 +671,11 @@ class ZCS_AI(BaseAI):
                 p_name = fellow.name
                 if p_name == data.lastPlayer and hc.pos == data.cardHandIndex:
                     reward = REWARD_GOOD_PLAY_AFTER_HINT
-                    for r in hg.value_rules:
-                        r.reward += reward
-                    for r in hg.color_rules:
-                        r.reward += reward
+                    if self.train:
+                        for r in hg.value_rules:
+                            r.reward += reward
+                        for r in hg.color_rules:
+                            r.reward += reward
 
                     self.log().info(f"Reward {reward} given for the good hint since {p_name} played correctly ({data.card.value}-{data.card.color}).")
                     break
@@ -655,7 +693,8 @@ class ZCS_AI(BaseAI):
 
                 reward = REWARD_BAD_PLAY[data.card.value-1]
 
-                self.last_chosen_rule.reward += reward
+                if self.train:
+                    self.last_chosen_rule.reward += reward
                 self.log().info(f"Reward {reward} given for the bad play.")
         else:
             # Check if a fellow player made a bad move with our hint to give reward
@@ -665,10 +704,11 @@ class ZCS_AI(BaseAI):
                 p_name = fellow.name
                 if p_name == data.lastPlayer and hc.pos == data.cardHandIndex:
                     reward = REWARD_BAD_WRONG_PLAY_AFTER_HINT
-                    for r in hg.value_rules:
-                        r.reward += reward
-                    for r in hg.color_rules:
-                        r.reward += reward
+                    if self.train:
+                        for r in hg.value_rules:
+                            r.reward += reward
+                        for r in hg.color_rules:
+                            r.reward += reward
                     self.log().info(
                         f"Reward {reward} given for the bad hint since {p_name} tried to play it wrongly ({data.card.value}-{data.card.color}).")
                     break
@@ -773,11 +813,12 @@ class ZCS_AI(BaseAI):
                             f"Reward {reward} given for the discard. {data.lastPlayer} discarded {card_str} using our hint and the {color} stack is blocked on the ({blocking_value}-{color})!")
 
         # Assign reward
-        if myself:
-            self.last_chosen_rule.reward += reward
-        else:
-            for r in rules:
-                r.reward += reward
+        if self.train:
+            if myself:
+                self.last_chosen_rule.reward += reward
+            else:
+                for r in rules:
+                    r.reward += reward
 
     def evaluate_fellow_discard(self, data):
         # Check if a fellow player made a good or bad discard using our hint
