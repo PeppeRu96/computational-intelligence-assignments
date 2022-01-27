@@ -4,7 +4,7 @@ Exam of computational intelligence 2021 - 2022. It requires teaching the client 
 
 # Learning Classifier System
 The system is a learning classifier system which tries to exploit the reinforcement learning technique to obtain long-term good results in handling large-space problems like the Hanabi game.
-
+The complete description is available in `DOCUMENTATION.md`.
 ## Usage
 The only script that you need to launch is: `client.py`. You can find all the details to launch the script typing `python client.py -h`.
 However, this is a small recap:
